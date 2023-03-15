@@ -82,6 +82,8 @@ private:
     uint16_t *queueIndX; // array for breadth-first search process of segmentation, for speed
     uint16_t *queueIndY;
 
+    bool stop=false;
+
 public:
     ImageProjection():
         nh("~"){
@@ -163,14 +165,16 @@ public:
     void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg){
 
         cloudHeader = laserCloudMsg->header;
-        // cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
+//        cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
         pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
+
         // Remove Nan points
         std::vector<int> indices;
         pcl::removeNaNFromPointCloud(*laserCloudIn, *laserCloudIn, indices);
         // have "ring" channel in the cloud
         if (useCloudRing == true){
             pcl::fromROSMsg(*laserCloudMsg, *laserCloudInRing);
+
             if (laserCloudInRing->is_dense == false) {
                 ROS_ERROR("Point cloud is not in dense format, please remove NaN points first!");
                 ros::shutdown();
@@ -206,6 +210,8 @@ public:
         } else if (segMsg.endOrientation - segMsg.startOrientation < M_PI)
             segMsg.endOrientation += 2 * M_PI;
         segMsg.orientationDiff = segMsg.endOrientation - segMsg.startOrientation;
+        std::cout << "start angle: " << segMsg.startOrientation<<"\n";
+        std::cout << "end angle:   " << segMsg.endOrientation<<"\n";
     }
 
     void projectPointCloud(){
@@ -244,6 +250,8 @@ public:
             range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y + thisPoint.z * thisPoint.z);
             if (range < sensorMinimumRange)
                 continue;
+            if (range > 100)
+              std::cout << thisPoint.x << " " << thisPoint.y << " " << thisPoint.z << "\n";
             
             rangeMat.at<float>(rowIdn, columnIdn) = range;
 
@@ -254,6 +262,19 @@ public:
             fullInfoCloud->points[index] = thisPoint;
             fullInfoCloud->points[index].intensity = range; // the corresponding range of a point is saved as "intensity"
         }
+
+//        std::cout << "fullCloud size: " << fullCloud->size() << std::endl;
+//        double minVal;
+//        double maxVal;
+//        cv::Point minLoc;
+//        cv::Point maxLoc;
+
+//        cv::minMaxLoc( rangeMat, &minVal, &maxVal, &minLoc, &maxLoc );
+
+//        cout << "min val: " << minVal << endl;
+//        cout << "max val: " << maxVal << endl;
+
+
     }
 
 
@@ -264,6 +285,9 @@ public:
         // -1, no valid info to check if ground of not
         //  0, initial value, after validation, means not ground
         //  1, ground
+
+        cv::Mat groundVis = groundMat.clone();
+
         for (size_t j = 0; j < Horizon_SCAN; ++j){
             for (size_t i = 0; i < groundScanInd; ++i){
 
@@ -289,6 +313,9 @@ public:
                 }
             }
         }
+
+
+
         // extract ground cloud (groundMat == 1)
         // mark entry that doesn't need to label (ground and invalid point) for segmentation
         // note that ground remove is from 0~N_SCAN-1, need rangeMat for mark label matrix for the 16th scan
@@ -461,6 +488,7 @@ public:
 
     
     void publishCloud(){
+      std::string frame_id = "base_link";
         // 1. Publish Seg Cloud Info
         segMsg.header = cloudHeader;
         pubSegmentedCloudInfo.publish(segMsg);
@@ -469,39 +497,39 @@ public:
 
         pcl::toROSMsg(*outlierCloud, laserCloudTemp);
         laserCloudTemp.header.stamp = cloudHeader.stamp;
-        laserCloudTemp.header.frame_id = "base_link";
+        laserCloudTemp.header.frame_id = frame_id;
         pubOutlierCloud.publish(laserCloudTemp);
         // segmented cloud with ground
         pcl::toROSMsg(*segmentedCloud, laserCloudTemp);
         laserCloudTemp.header.stamp = cloudHeader.stamp;
-        laserCloudTemp.header.frame_id = "base_link";
+        laserCloudTemp.header.frame_id = frame_id;
         pubSegmentedCloud.publish(laserCloudTemp);
         // projected full cloud
         if (pubFullCloud.getNumSubscribers() != 0){
             pcl::toROSMsg(*fullCloud, laserCloudTemp);
             laserCloudTemp.header.stamp = cloudHeader.stamp;
-            laserCloudTemp.header.frame_id = "base_link";
+            laserCloudTemp.header.frame_id = frame_id;
             pubFullCloud.publish(laserCloudTemp);
         }
         // original dense ground cloud
         if (pubGroundCloud.getNumSubscribers() != 0){
             pcl::toROSMsg(*groundCloud, laserCloudTemp);
             laserCloudTemp.header.stamp = cloudHeader.stamp;
-            laserCloudTemp.header.frame_id = "base_link";
+            laserCloudTemp.header.frame_id = frame_id;
             pubGroundCloud.publish(laserCloudTemp);
         }
         // segmented cloud without ground
         if (pubSegmentedCloudPure.getNumSubscribers() != 0){
             pcl::toROSMsg(*segmentedCloudPure, laserCloudTemp);
             laserCloudTemp.header.stamp = cloudHeader.stamp;
-            laserCloudTemp.header.frame_id = "base_link";
+            laserCloudTemp.header.frame_id = frame_id;
             pubSegmentedCloudPure.publish(laserCloudTemp);
         }
         // projected full cloud info
         if (pubFullInfoCloud.getNumSubscribers() != 0){
             pcl::toROSMsg(*fullInfoCloud, laserCloudTemp);
             laserCloudTemp.header.stamp = cloudHeader.stamp;
-            laserCloudTemp.header.frame_id = "base_link";
+            laserCloudTemp.header.frame_id = frame_id;
             pubFullInfoCloud.publish(laserCloudTemp);
         }
     }

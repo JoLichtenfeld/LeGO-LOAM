@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="bag_file" default="/home/share/rosbag/nakanoshima211023_mapping.bag" />
-    <arg name="playback_speed" default="5.0" />
+    <arg name="bag_file" default="/home/jonathan/bags/LeGO-LOAM/2017-06-08-15-49-45_0.bag" />
+    <arg name="playback_speed" default="0.3" />
 
     <param name="/use_sim_time" value="true" />
     <include file="$(find lego_loam)/launch/run.launch"/>
