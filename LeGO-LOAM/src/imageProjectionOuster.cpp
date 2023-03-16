@@ -187,7 +187,7 @@ public:
     // 4. Mark ground points
     groundRemoval();
     // 5. Point cloud segmentation
-    cloudSegmentation();
+    //    cloudSegmentation();
     // 6. Publish all clouds
     publishCloud();
     // 7. Reset parameters for next iteration
@@ -233,7 +233,6 @@ public:
         continue;
 
       rangeMat.at<float>(rowIdn, columnIdn) = range;
-
       thisPoint.intensity = (float)rowIdn + (float)columnIdn / 10000.0;  //???
 
       fullCloud->points[i] = thisPoint;
@@ -264,7 +263,6 @@ public:
         {
           // no info to check, invalid points
           groundMat.at<int8_t>(row, col) = -1;
-          std::cout << " grm cont: groundMat at " << row << "/" << col << "\n";
           continue;
         }
 
@@ -276,10 +274,8 @@ public:
 
         if (abs(angle - sensorMountAngle) <= 10)
         {
-          std::cout << " groundMat at " << row << "/" << col << "\n";
           groundMat.at<int8_t>(row, col) = 1;
-          std::cout << " grm second if: groundMat at " << row + 1 << "/" << col << "\n";
-          groundMat.at<int8_t>(row + 1, col) = 1;
+          groundMat.at<int8_t>(row - 1, col) = 1;
         }
       }
     }
@@ -292,8 +288,6 @@ public:
       size_t row = N_SCAN - 1 - i;
       for (size_t col = 0; col < Horizon_SCAN; ++col)
       {
-        std::cout << " grm extract 1: groundMat at " << row + 1 << "/" << col << "\n";
-
         if (groundMat.at<int8_t>(row, col) == 1 || rangeMat.at<float>(row, col) == FLT_MAX)
         {
           labelMat.at<int>(row, col) = -1;
@@ -308,8 +302,6 @@ public:
         size_t row = N_SCAN - 1 - i;
         for (size_t col = 0; col < Horizon_SCAN; ++col)
         {
-          std::cout << " grm ectract 2: groundMat at " << row + 1 << "/" << col << "\n";
-
           if (groundMat.at<int8_t>(row, col) == 1)
             groundCloud->push_back(fullCloud->points[col + row * Horizon_SCAN]);
         }
