@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="bag_file" default="/home/jonathan/bags/AHG/anymal_dynamic/0.bag" />
-    <arg name="playback_speed" default="0.1" />
+    <arg name="playback_speed" default="1" />
 
     <param name="/use_sim_time" value="true" />
     <include file="$(find lego_loam)/launch/run_ouster.launch"/>

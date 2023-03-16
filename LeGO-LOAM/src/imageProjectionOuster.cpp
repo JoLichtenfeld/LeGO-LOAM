@@ -153,7 +153,6 @@ public:
 
   void resetParameters()
   {
-    std::cout << "start reset\n";
     laserCloudIn->clear();
     groundCloud->clear();
     segmentedCloud->clear();
@@ -167,8 +166,6 @@ public:
 
     std::fill(fullCloud->points.begin(), fullCloud->points.end(), nanPoint);
     std::fill(fullInfoCloud->points.begin(), fullInfoCloud->points.end(), nanPoint);
-
-    std::cout << "done\n";
   };
 
   ~ImageProjection()
@@ -187,7 +184,7 @@ public:
     // 4. Mark ground points
     groundRemoval();
     // 5. Point cloud segmentation
-    //    cloudSegmentation();
+    cloudSegmentation();
     // 6. Publish all clouds
     publishCloud();
     // 7. Reset parameters for next iteration
@@ -311,13 +308,11 @@ public:
 
   void cloudSegmentation()
   {
-    //    std::cout << "start segmentation\n";
     // segmentation process
     for (size_t i = 0; i < N_SCAN; ++i)
       for (size_t j = 0; j < Horizon_SCAN; ++j)
         if (labelMat.at<int>(i, j) == 0)
           labelComponents(i, j);
-    //    std::cout << "labeling done " << labelCount << "\n";
 
     int sizeOfSegCloud = 0;
     // extract segmented cloud for lidar odometry
@@ -383,7 +378,6 @@ public:
 
   void labelComponents(int row, int col)
   {
-    //    std::cout << "start labeling " << row << "/" << col << "\n";
     // use std::queue std::vector std::deque will slow the program down greatly
     float d1, d2, alpha, angle;
     int fromIndX, fromIndY, thisIndX, thisIndY;
@@ -406,7 +400,6 @@ public:
       fromIndY = queueIndY[queueStartInd];
       --queueSize;
       ++queueStartInd;
-      //      std::cout << " curr: " << fromIndX << "/" << fromIndY << "\n";
 
       // Mark popped point
       labelMat.at<int>(fromIndX, fromIndY) = labelCount;
@@ -486,7 +479,6 @@ public:
 
   void publishCloud()
   {
-    //    std::cout << "start pub\n";
     std::string frame_id = "autonomy_module_lidar_frame";
 
     // 1. Publish Seg Cloud Info
@@ -543,7 +535,6 @@ public:
       laserCloudTemp.header.frame_id = frame_id;
       pubFullInfoCloud.publish(laserCloudTemp);
     }
-    //    std::cout << "done\n";
   }
 };
 

@@ -69,8 +69,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 21.754520416259766
-        Min Value: -2.2735652923583984
+        Max Value: 21.691465377807617
+        Min Value: -2.179659843444824
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -86,7 +86,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 2
       Selectable: true
-      Size (Pixels): 2
+      Size (Pixels): 1
       Size (m): 0.009999999776482582
       Style: Points
       Topic: /autonomy_module_lidar/points
